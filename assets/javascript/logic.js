@@ -17,6 +17,12 @@ $(document).ready(function () {
     var dest = "";
     var freq = "";
     var train1 = "";
+    var realTimeFormat;
+    var trainTime;
+    var trainTdiff;
+    var minAway = "";
+    var nextTrainTime;
+   // var childSnapshot = "";
 
     $("#add-train").on("click", function () {
         event.preventDefault();
@@ -24,7 +30,17 @@ $(document).ready(function () {
         name = $("#train-name-input").val().trim();
         dest = $("#dest-input").val().trim();
         freq = $("#freq-input").val().trim();
-        train1 = $("#first-input").val().trim(), "HH:mm";
+        train1 = $("#first-input").val().trim();
+
+        
+        realTimeFormat = moment(train1, "HH:mm").subtract(24, 'h')
+        trainTime = moment().diff(moment(realTimeFormat), "m")
+        trainTdiff = trainTime % freq;
+        minAway = freq - trainTdiff;
+        // console.log(minAway)
+        nextTrainTime = moment(moment().add(minAway, 'm')).format("HH:mm");
+        // console.log(nextTrainTime);
+
 
         dataRef.ref().push({
 
@@ -32,9 +48,12 @@ $(document).ready(function () {
             dest: dest,
             freq: freq,
             train1: train1,
+            minAway : minAway,
+            nextTrainTime: nextTrainTime,
             dateAdded: firebase.database.ServerValue.TIMESTAMP
         })
-        // console.log("new train stamp")
+        // console.log("new train")
+        
     });
 
     dataRef.ref().on("child_added", function (childSnapshot) {
@@ -42,35 +61,42 @@ $(document).ready(function () {
         console.log(childSnapshot.val().dest);
         console.log(childSnapshot.val().freq);
         console.log(childSnapshot.val().train1);
+        console.log(childSnapshot.val().minAway);
+        console.log(childSnapshot.val().nextTrainTime); 
 
         $("tbody").append("<tr><td id=name>"
             + childSnapshot.val().name + "</td><td id=dest>"
             + childSnapshot.val().dest + "</td><td id=freq>"
-            + childSnapshot.val().freq + "</td><td id=1stTrain>"
-            + childSnapshot.val().train1 + "</td><td>"
-            + "Paul BLart" + "</td><td>"
-            + "<input type='button' value='remove' class='remove-t btn btn-success'>"
+            + childSnapshot.val().freq + "</td><td id=nextTrain>"
+            + childSnapshot.val().nextTrainTime + "</td><td>"
+            + childSnapshot.val().minAway + "</td><td>"
+            + "<button class='remove-t btn btn-success'>remove</button>"
             + "</td></tr>"
         )
-    }, function (errorObject) {
-        console.log("Errors handled: " + errorObject.code);
-    })
-
-   /* dataRef.ref().orderByChild("dateAdded").limitToLast1().on("child_added", function (childSnapshot) {
-        $("#name").text(childSnapshot.val().name);
-        $("#dest").text(childSnapshot.val().dest);
-        $("#freq").text(childSnapshot.val().freq);
-        $("#1stTrain").text(childSnapshot.val().train1);
-    })  */
 
 
-
-    // make remove button functional here
-    $(".table").on("click", ".remove-t", function () {
-        $(this).closest('tr').remove();
-           deleteKey = $(this).parent().attr
-    })
-
+        // remove button functional, can remove from DOM, not from Firebase
+        var key = Object(childSnapshot.val());
+        // console.log(key);
+        $(".table").on("click", ".remove-t", function () {
+            $(this).closest('tr').remove();
+            $(key).remove();
+        }) 
+    }
+, function (errorObject) {
+    console.log("Errors handled: " + errorObject.code);
 })
+})
+
+    /*  dataRef.ref().orderByChild("dateAdded").limitToLast1().on("child_added", function (childSnapshot) {
+          $("#name").text(childSnapshot.val().name);
+          $("#dest").text(childSnapshot.val().dest);
+          $("#freq").text(childSnapshot.val().freq);
+          $("#1stTrain").text(childSnapshot.val().train1);
+      }) */
+
+
+    
+
 
 
